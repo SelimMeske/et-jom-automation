@@ -5,7 +5,7 @@ import time, re, docx
 from parsers.sum_parser import sum_parser
 
 docx_file = docx.Document('C:\\Users\\mesic\\Downloads\\new.docx')
-
+"https://docs.google.com/spreadsheets/d/1iwo8qGS0eG3THEwxbxNmM6ZFdX8Var8qW4lB7j5dl00/edit?ts=5ebcedc7#gid=0"
 # Main section text
 main_section = []
 
