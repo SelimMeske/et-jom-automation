@@ -3,6 +3,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
 import time, re, docx
 from parsers.sum_parser import sum_parser
+from tests.tests import tests
 from selenium.webdriver.common.action_chains import ActionChains
 
 docx_file = docx.Document('C:\\Users\\mesic\\Downloads\\new.docx')
@@ -12,7 +13,6 @@ main_section = []
 
 # Full text list
 full_text_list = []
-
 
 ### Extract the text in list
 def extract_text():
@@ -33,12 +33,14 @@ def get_full_text():
         full_text_list.append(current_paragraph)
     
     return '\n'.join(full_text_list)
+
 ### Get the main title text. Die besten xy - Unser Vergleich
 def get_title_text():
     for para in docx_file.paragraphs:
         current_paragraph = para.text
         if 'Die best' in current_paragraph:
             return current_paragraph
+
 ### Get intro text
 def get_intro_text():
     if (document_serialized[2] and len(document_serialized[1]) > 150):
@@ -122,14 +124,17 @@ def get_pros_and_cons():
     pros = []
     cons = []
 
-    for pro, con in zip(document_serialized, document_serialized):
-        pros.append(pro)
-        cons.append(con)
+    for pro_or_con in document_serialized:
+        
+        if(pro_or_con.startswith('Vorteile', 'vorteile', 'Vorteil', 'vorteil')):
+            pros.append(pro_or_con)
+        elif(pro_or_con.startswith('Nachteile', 'nachteile', 'Nachteil', 'nachteil')):
+            cons.append(pro_or_con)
     
     return {"pros": pros, "cons": cons}
 
 ### Get the title input box for all 4 products
-def get_product_titles(full_text_list):
+def add_product_titles(full_text_list):
     product_no = 1
     for para in full_text_list:
         product_title_input_xpath = f'/html/body/div[1]/div[2]/div[2]/div[1]/div[4]/form/div/div/div[3]/div[1]/div[1]/div/div[9]/div[2]/div/table/tbody/tr[{product_no}]/td[2]/div[1]/div[2]/div/input'
@@ -161,42 +166,8 @@ pros_and_cons = get_pros_and_cons()
 for i in pros_and_cons['pros']: 
     pass
 
-### Test if all products have summary, pros and cons
-summary = re.findall("Summary", full_text, flags=re.IGNORECASE)
-pros = re.findall(r'^Vorteile', full_text, flags=re.IGNORECASE)
-cons = re.findall(r'^Nachteile', full_text, flags=re.IGNORECASE)
-
-cons_backup = re.findall(r'^Nachteil', full_text, re.MULTILINE | re.IGNORECASE)
-pros_backup = re.findall(r'^Vorteil', full_text, re.MULTILINE | re.IGNORECASE)
-
-if len(summary) == 4:
-    print("Summary Test -\033[1;32;40m Passed \033[0m")
-else:
-    print("Summary Test -\033[1;31;93m Failed \033[0m")
-
-if len(pros) == 4:
-    print("Pros Test    -\033[1;32;40m Passed \033[0m")
-else:
-    if len(cons) < 4:
-        if len(pros_backup) == 4:
-            print("Pros Test    -\033[1;32;40m Passed \033[0m")
-        else:
-            print("Pros Test    -\033[1;31;93m Failed \033[0m")
-    else:
-        print("Pros Test    -\033[1;31;93m Failed \033[0m")
-
-if len(cons) == 4:
-    print("Cons Test    -\033[1;32;40m Passed \033[0m")
-else:
-    if len(cons) < 4:
-        if len(cons_backup) == 4:
-            print("Cons Test    -\033[1;32;40m Passed \033[0m")
-        else:
-            print("Cons Test    -\033[1;31;93m Failed \033[0m")
-    else:
-        print("Cons Test    -\033[1;31;93m Failed \033[0m")
-
-time.sleep(1)
+### Run tests!!!
+tests(full_text)
 
 # Title input
 title = webdriver.find_element_by_xpath('/html/body/div[1]/div[2]/div[2]/div[1]/div[4]/form/div/div/div[1]/div[1]/div[1]/input')
@@ -211,12 +182,6 @@ add_category_checkbox = webdriver.find_element_by_xpath('/html/body/div[1]/div[2
 
 ### Get intro text
 intro_text = get_intro_text()
-
-
-
-time.sleep(2)
-
-get_product_titles(full_text_list)
 
 ##
 ###
@@ -241,3 +206,8 @@ actions.move_to_element(add_category_checkbox).click().perform()
 
 ### Add main text
 main_text_area.send_keys(main_text)
+
+time.sleep(2)
+
+### Addding product titles
+add_product_titles(full_text_list)
