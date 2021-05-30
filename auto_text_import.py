@@ -3,9 +3,10 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
 import time, re, docx
 from parsers.sum_parser import sum_parser
+from selenium.webdriver.common.action_chains import ActionChains
 
 docx_file = docx.Document('C:\\Users\\mesic\\Downloads\\new.docx')
-"https://docs.google.com/spreadsheets/d/1iwo8qGS0eG3THEwxbxNmM6ZFdX8Var8qW4lB7j5dl00/edit?ts=5ebcedc7#gid=0"
+
 # Main section text
 main_section = []
 
@@ -22,21 +23,32 @@ def extract_text():
     
     return extracted
 
+### Extracted text in list
 document_serialized = extract_text()
 
+### Full text in one string
 def get_full_text():
     for para in docx_file.paragraphs:
         current_paragraph = para.text
         full_text_list.append(current_paragraph)
     
     return '\n'.join(full_text_list)
-
+### Get the main title text. Die besten xy - Unser Vergleich
 def get_title_text():
     for para in docx_file.paragraphs:
         current_paragraph = para.text
         if 'Die best' in current_paragraph:
             return current_paragraph
+### Get intro text
+def get_intro_text():
+    if (document_serialized[2] and len(document_serialized[1]) > 150):
+        intro_text = document_serialized[1]
+        return intro_text
+    elif (document_serialized[3] and len(document_serialized[2]) > 150):
+        intro_text = document_serialized[2]
+        return intro_text
 
+### Get the title and summaries for all 4 products
 def get_all_product_headlines():
 
     summaries = []
@@ -72,15 +84,15 @@ def get_all_product_headlines():
                 summaries.append(current_summary)
                 
                 if (document_serialized[index-3]):
-                    current_headline = document_serialized[index-2]
-                    headlines.append(current_headline)
-                    
-                elif(document_serialized[index-4]):
                     current_headline = document_serialized[index-3]
                     headlines.append(current_headline)
                     
-                elif(document_serialized[index-5]):
+                elif(document_serialized[index-4]):
                     current_headline = document_serialized[index-4]
+                    headlines.append(current_headline)
+                    
+                elif(document_serialized[index-5]):
+                    current_headline = document_serialized[index-5]
                     headlines.append(current_headline)
                 else:
                     print("\033[1;31;93m Cant find headline... \033[0m")
@@ -89,7 +101,7 @@ def get_all_product_headlines():
 
     return { "summaries": summaries, "headlines": headlines}
             
-
+### Get text for the main section... Warum Sie uns vartrauen konnen
 def get_main_section():
     # Flag to start writing to main section
     main_start_flag = False
@@ -104,6 +116,19 @@ def get_main_section():
     
     return '\n'.join(main_section)
 
+### Get pros and cons text
+def get_pros_and_cons():
+
+    pros = []
+    cons = []
+
+    for pro, con in zip(document_serialized, document_serialized):
+        pros.append(pro)
+        cons.append(con)
+    
+    return {"pros": pros, "cons": cons}
+
+### Get the title input box for all 4 products
 def get_product_titles(full_text_list):
     product_no = 1
     for para in full_text_list:
@@ -111,15 +136,14 @@ def get_product_titles(full_text_list):
         summary_found = re.search('summary', para, flags=re.IGNORECASE)
         if summary_found:
             product_title_input = webdriver.find_element_by_xpath(product_title_input_xpath)
-            print(full_text_list.index(summary_found.group(0)))
             product_title_input.send_keys('test')
             product_no += 1
 
-# options = webdriver.ChromeOptions()
-# options.add_argument("user-data-dir=C:\\Users\\mesic\\AppData\\Local\\Google\\Chrome\\User Data")
+options = webdriver.ChromeOptions()
+options.add_argument("user-data-dir=C:\\Users\\mesic\\AppData\\Local\\Google\\Chrome\\User Data")
 
-# webdriver = webdriver.Chrome(executable_path='C:\\Users\\mesic\\OneDrive\\Documents\\chromedriver.exe', chrome_options=options)
-# webdriver.get('https://osp.expertentesten.de/wp-admin/post-new.php')
+webdriver = webdriver.Chrome(executable_path='C:\\Users\\mesic\\OneDrive\\Documents\\chromedriver.exe', chrome_options=options)
+webdriver.get('https://osp.expertentesten.de/wp-admin/post-new.php')
 
 full_text = get_full_text()
 
@@ -128,11 +152,16 @@ main_text = get_main_section()
 
 headlines_and_summaries = get_all_product_headlines()
 
-for i in headlines_and_summaries['summaries']:
+for i in headlines_and_summaries['headlines']:
     a = sum_parser(i)
-    print(a)
+    pass
 
-# Test if all products have summary, pros and cons
+pros_and_cons = get_pros_and_cons()
+
+for i in pros_and_cons['pros']: 
+    pass
+
+### Test if all products have summary, pros and cons
 summary = re.findall("Summary", full_text, flags=re.IGNORECASE)
 pros = re.findall(r'^Vorteile', full_text, flags=re.IGNORECASE)
 cons = re.findall(r'^Nachteile', full_text, flags=re.IGNORECASE)
@@ -170,24 +199,45 @@ else:
 time.sleep(1)
 
 # Title input
-# title = webdriver.find_element_by_xpath('/html/body/div[1]/div[2]/div[2]/div[1]/div[4]/form/div/div/div[1]/div[1]/div[1]/input')
+title = webdriver.find_element_by_xpath('/html/body/div[1]/div[2]/div[2]/div[1]/div[4]/form/div/div/div[1]/div[1]/div[1]/input')
 # Intro input
-# intro = webdriver.find_element_by_xpath('/html/body/div[1]/div[2]/div[2]/div[1]/div[4]/form/div/div/div[3]/div[1]/div[1]/div/div[3]/div[2]/textarea')
+intro = webdriver.find_element_by_xpath('/html/body/div[1]/div[2]/div[2]/div[1]/div[4]/form/div/div/div[3]/div[1]/div[1]/div/div[3]/div[2]/textarea')
 # Main Text Input
-# main_text_area = webdriver.find_element_by_xpath('/html/body/div[1]/div[2]/div[2]/div[1]/div[4]/form/div/div/div[3]/div[1]/div[1]/div/div[5]/div[2]/div/div[2]/textarea')
+main_text_area = webdriver.find_element_by_xpath('/html/body/div[1]/div[2]/div[2]/div[1]/div[4]/form/div/div/div[3]/div[1]/div[1]/div/div[5]/div[2]/div/div[2]/textarea')
 # Add Product Button
-# add_product_button = webdriver.find_element_by_xpath('/html/body/div[1]/div[2]/div[2]/div[1]/div[4]/form/div/div/div[3]/div[1]/div[1]/div/div[9]/div[2]/div/div/a')
+add_product_button = webdriver.find_element_by_xpath('/html/body/div[1]/div[2]/div[2]/div[1]/div[4]/form/div/div/div[3]/div[1]/div[1]/div/div[9]/div[2]/div/div/a')
 # Add Category Checkbox
-# add_category_checkbox = webdriver.find_element_by_xpath('/html/body/div[1]/div[2]/div[2]/div[1]/div[4]/form/div/div/div[2]/div/div[2]/div/div/div[2]/ul/li[2]/label/input')
+add_category_checkbox = webdriver.find_element_by_xpath('/html/body/div[1]/div[2]/div[2]/div[1]/div[4]/form/div/div/div[2]/div/div[2]/div/div/div[2]/ul/li[2]/label')
 
-# for i in range(3):
-    # add_category_checkbox.click()
+### Get intro text
+intro_text = get_intro_text()
 
-# add_product_button.click()
 
-# title.send_keys(title_text)
-# main_text_area.send_keys(main_text)
 
 time.sleep(2)
 
-# get_product_titles(full_text_list)
+get_product_titles(full_text_list)
+
+##
+###
+#### DOM Elements Actions
+###
+##
+
+### Enter the intro text
+intro.send_keys(intro_text)
+
+### Add all products in DOM
+for i in range(3):
+    add_product_button.click()
+    time.sleep(1)
+
+### Move to element and click on it. This is to add the category.
+actions = ActionChains(webdriver)
+actions.move_to_element(add_category_checkbox).click().perform()
+
+### Add main title
+# title.send_keys(title_text)
+
+### Add main text
+main_text_area.send_keys(main_text)
