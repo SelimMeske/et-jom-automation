@@ -1,10 +1,12 @@
 def pros_cons_parser(string):
-    string.replace('Vorteile')
-    string.replace('vorteile')
-    string.replace('Vorteil')
-    string.replace('vorteil')
+    string = string.replace('Vorteile:', '')
+    string = string.replace('vorteile:', '')
+    string = string.replace('Vorteil:', '')
+    string = string.replace('vorteil:', '')
     
-    string.replace('Nachteile')
-    string.replace('nachteile')
-    string.replace('Nachteil')
-    string.replace('nachteil')
+    string = string.replace('Nachteile:', '')
+    string = string.replace('nachteile:', '')
+    string = string.replace('Nachteil:', '')
+    string = string.replace('nachteil:', '')
+
+    return string

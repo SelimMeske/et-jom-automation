@@ -3,6 +3,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
 import time, re, docx
 from parsers.sum_parser import sum_parser
+from parsers.pros_cons_parser import pros_cons_parser
 from tests.tests import tests
 from selenium.webdriver.common.action_chains import ActionChains
 
@@ -118,31 +119,65 @@ def get_main_section():
     
     return '\n'.join(main_section)
 
-### Get pros and cons text
-def get_pros_and_cons():
+### Get pros text
+def get_pros_regex(full_text):
+    all_pros_list = []
 
-    pros = []
-    cons = []
+    pros_regex = r"^vorteile(.|\n)*?nachteile"
 
-    for pro_or_con in document_serialized:
-        
-        if(pro_or_con.startswith('Vorteile', 'vorteile', 'Vorteil', 'vorteil')):
-            pros.append(pro_or_con)
-        elif(pro_or_con.startswith('Nachteile', 'nachteile', 'Nachteil', 'nachteil')):
-            cons.append(pro_or_con)
-    
-    return {"pros": pros, "cons": cons}
+    all_pros = re.finditer(pros_regex, full_text, flags=re.DOTALL | re.MULTILINE | re.IGNORECASE)
 
-### Get the title input box for all 4 products
-def add_product_titles(full_text_list):
+    for match in all_pros:
+        con = full_text[match.start():match.end()]
+        all_pros_list.append(con)
+
+    return all_pros_list
+
+### Get cons text
+def get_cons_regex(full_text):
+    all_cons_list = []
+
+    cons_regex = r"^nachteil(.*)"
+
+    all_cons = re.findall(cons_regex, full_text, flags=re.DOTALL | re.MULTILINE | re.IGNORECASE)
+
+    return all_cons
+
+### Get the title input boxes for all 4 products
+def add_product_titles(headlines_list):
     product_no = 1
-    for para in full_text_list:
+    for headline in headlines_list:
         product_title_input_xpath = f'/html/body/div[1]/div[2]/div[2]/div[1]/div[4]/form/div/div/div[3]/div[1]/div[1]/div/div[9]/div[2]/div/table/tbody/tr[{product_no}]/td[2]/div[1]/div[2]/div/input'
-        summary_found = re.search('summary', para, flags=re.IGNORECASE)
-        if summary_found:
-            product_title_input = webdriver.find_element_by_xpath(product_title_input_xpath)
-            product_title_input.send_keys('test')
-            product_no += 1
+        product_title_input = webdriver.find_element_by_xpath(product_title_input_xpath)
+        product_title_input.send_keys(headline)
+        product_no += 1
+
+### Get the pros input boxes for all 4 products
+def add_product_pros(pros_list):
+    product_no = 1
+    for pro in pros_list:
+        product_title_input_xpath = f'/html/body/div[1]/div[2]/div[2]/div[1]/div[4]/form/div/div/div[3]/div[1]/div[1]/div/div[9]/div[2]/div/table/tbody/tr[{product_no}]/td[2]/div[5]/div[2]/textarea'
+        product_title_input = webdriver.find_element_by_xpath(product_title_input_xpath)
+        product_title_input.send_keys(pro)
+        product_no += 1
+
+### Get the pros input boxes for all 4 products
+def add_product_cons(cons_list):
+    product_no = 1
+    for con in cons_list:
+        product_title_input_xpath = f'/html/body/div[1]/div[2]/div[2]/div[1]/div[4]/form/div/div/div[3]/div[1]/div[1]/div/div[9]/div[2]/div/table/tbody/tr[{product_no}]/td[2]/div[6]/div[2]/textarea'
+        product_title_input = webdriver.find_element_by_xpath(product_title_input_xpath)
+        product_title_input.send_keys(con)
+        product_no += 1
+
+### Get the summary input boxes for all 4 products
+def add_product_sum(sum_list):
+    product_no = 1
+    for sum in sum_list:
+        product_title_input_xpath = f'/html/body/div[1]/div[2]/div[2]/div[1]/div[4]/form/div/div/div[3]/div[1]/div[1]/div/div[9]/div[2]/div/table/tbody/tr[{product_no}]/td[2]/div[2]/div[2]/div/input'
+        product_title_input = webdriver.find_element_by_xpath(product_title_input_xpath)
+        product_title_input.send_keys(sum)
+        product_no += 1
 
 options = webdriver.ChromeOptions()
 options.add_argument("user-data-dir=C:\\Users\\mesic\\AppData\\Local\\Google\\Chrome\\User Data")
@@ -157,14 +192,8 @@ main_text = get_main_section()
 
 headlines_and_summaries = get_all_product_headlines()
 
-for i in headlines_and_summaries['headlines']:
-    a = sum_parser(i)
-    pass
-
-pros_and_cons = get_pros_and_cons()
-
-for i in pros_and_cons['pros']: 
-    pass
+pros = get_pros_regex(full_text)
+cons = get_cons_regex(full_text)
 
 ### Run tests!!!
 tests(full_text)
@@ -202,12 +231,16 @@ actions = ActionChains(webdriver)
 actions.move_to_element(add_category_checkbox).click().perform()
 
 ### Add main title
-# title.send_keys(title_text)
+title.send_keys(title_text)
 
 ### Add main text
 main_text_area.send_keys(main_text)
 
-time.sleep(2)
+### Adding product headlines
+add_product_titles(headlines_and_summaries['headlines'])
 
-### Addding product titles
-add_product_titles(full_text_list)
+add_product_pros(pros)
+
+add_product_cons(cons)
+
+add_product_sum(headlines_and_summaries['summaries'])
